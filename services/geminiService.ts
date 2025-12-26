@@ -1,8 +1,23 @@
+
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Безопасное получение API ключа, чтобы не вызывать ошибку ReferenceError: process is not defined
+const getApiKey = () => {
+  try {
+    return (typeof process !== 'undefined' && process.env && process.env.API_KEY) ? process.env.API_KEY : '';
+  } catch (e) {
+    return '';
+  }
+};
+
+const apiKey = getApiKey();
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 export const generateTaskDescription = async (title: string): Promise<string> => {
+  if (!ai) {
+    return 'Функция AI недоступна: отсутствует API_KEY в переменной окружения.';
+  }
+  
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
@@ -23,6 +38,8 @@ export const generateTaskDescription = async (title: string): Promise<string> =>
 };
 
 export const analyzeTaskload = async (tasks: any[]): Promise<string> => {
+  if (!ai) return 'Анализ недоступен без API ключа.';
+  
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
